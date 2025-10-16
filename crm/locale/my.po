@@ -1,20 +1,22 @@
-# Translations template for Frappe CRM.
-# Copyright (C) 2025 Frappe Technologies Pvt. Ltd.
-# This file is distributed under the same license as the Frappe CRM project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
-#
 msgid ""
 msgstr ""
-"Project-Id-Version: Frappe CRM VERSION\n"
+"Project-Id-Version: frappe\n"
 "Report-Msgid-Bugs-To: shariq@frappe.io\n"
-"POT-Creation-Date: 2025-10-12 09:34+0000\n"
-"PO-Revision-Date: 2025-10-12 09:34+0000\n"
+"POT-Creation-Date: 2025-09-28 09:35+0000\n"
+"PO-Revision-Date: 2025-10-11 12:18\n"
 "Last-Translator: shariq@frappe.io\n"
-"Language-Team: shariq@frappe.io\n"
+"Language-Team: Burmese\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Crowdin-Project: frappe\n"
+"X-Crowdin-Project-ID: 639578\n"
+"X-Crowdin-Language: my\n"
+"X-Crowdin-File: /[frappe.crm] develop/crm/locale/main.pot\n"
+"X-Crowdin-File-ID: 97\n"
+"Language: my_MM\n"
 
 #: frontend/src/components/ViewControls.vue:1172
 msgid " (New)"
@@ -101,7 +103,7 @@ msgstr ""
 #: crm/fcrm/doctype/crm_lead/crm_lead.json
 #: crm/fcrm/doctype/crm_organization/crm_organization.json
 msgid "501-1000"
-msgstr ""
+msgstr "၅၀၁ - ၁၀၀၀"
 
 #. Option for the 'No. of Employees' (Select) field in DocType 'CRM Deal'
 #. Option for the 'No. of Employees' (Select) field in DocType 'CRM Lead'
@@ -111,7 +113,7 @@ msgstr ""
 #: crm/fcrm/doctype/crm_lead/crm_lead.json
 #: crm/fcrm/doctype/crm_organization/crm_organization.json
 msgid "51-200"
-msgstr ""
+msgstr "၅၁ - ၂၀၀"
 
 #. Paragraph text in the Frappe CRM Workspace
 #: crm/fcrm/workspace/frappe_crm/frappe_crm.json
@@ -1227,7 +1229,7 @@ msgstr ""
 #: crm/fcrm/doctype/crm_deal_status/crm_deal_status.json
 #: crm/fcrm/doctype/crm_lead_status/crm_lead_status.json
 msgid "Color"
-msgstr ""
+msgstr "အရောင်"
 
 #: frontend/src/components/FieldLayoutEditor.vue:417
 msgid "Column"
@@ -5035,38 +5037,32 @@ msgid "Setting up Frappe Mail requires you to have an API key and API Secret of 
 msgstr ""
 
 #: frontend/src/components/Settings/emailConfig.js:97
-msgid ""
-"Setting up GMail requires you to enable two factor authentication\n"
+msgid "Setting up GMail requires you to enable two factor authentication\n"
 "\t\t  and app specific passwords. Read more"
 msgstr ""
 
 #: frontend/src/components/Settings/emailConfig.js:105
-msgid ""
-"Setting up Outlook requires you to enable two factor authentication\n"
+msgid "Setting up Outlook requires you to enable two factor authentication\n"
 "\t\t  and app specific passwords. Read more"
 msgstr ""
 
 #: frontend/src/components/Settings/emailConfig.js:113
-msgid ""
-"Setting up Sendgrid requires you to enable two factor authentication\n"
+msgid "Setting up Sendgrid requires you to enable two factor authentication\n"
 "\t\t  and app specific passwords. Read more "
 msgstr ""
 
 #: frontend/src/components/Settings/emailConfig.js:121
-msgid ""
-"Setting up SparkPost requires you to enable two factor authentication\n"
+msgid "Setting up SparkPost requires you to enable two factor authentication\n"
 "\t\t  and app specific passwords. Read more "
 msgstr ""
 
 #: frontend/src/components/Settings/emailConfig.js:129
-msgid ""
-"Setting up Yahoo requires you to enable two factor authentication\n"
+msgid "Setting up Yahoo requires you to enable two factor authentication\n"
 "\t\t  and app specific passwords. Read more "
 msgstr ""
 
 #: frontend/src/components/Settings/emailConfig.js:137
-msgid ""
-"Setting up Yandex requires you to enable two factor authentication\n"
+msgid "Setting up Yandex requires you to enable two factor authentication\n"
 "\t\t  and app specific passwords. Read more "
 msgstr ""
 
