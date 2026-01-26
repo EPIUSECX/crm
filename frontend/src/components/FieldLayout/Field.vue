@@ -154,6 +154,29 @@
       input-class="border-none"
       @change="(v) => fieldChange(v, field)"
     />
+    <FileUploader
+      v-else-if="['Attach', 'Attach Image'].includes(field.fieldtype)"
+      :validateFile="field.fieldtype === 'Attach Image' ? validateIsImageFile : null"
+      @success="(file) => fieldChange(file.file_url, field)"
+    >
+      <template #default="{ openFileSelector }">
+        <div class="flex items-center gap-2">
+          <Button
+            :label="data[field.fieldname] ? __('Change file') : __('Upload file')"
+            @click="openFileSelector"
+          />
+          <a
+            v-if="data[field.fieldname]"
+            class="text-sm text-blue-600 hover:underline"
+            :href="data[field.fieldname]"
+            target="_blank"
+            rel="noreferrer"
+          >
+            {{ __('View') }}
+          </a>
+        </div>
+      </template>
+    </FileUploader>
     <FormControl
       v-else-if="
         ['Small Text', 'Text', 'Long Text', 'Code'].includes(field.fieldtype)
@@ -228,12 +251,18 @@ import TableMultiselectInput from '@/components/Controls/TableMultiselectInput.v
 import Link from '@/components/Controls/Link.vue'
 import Grid from '@/components/Controls/Grid.vue'
 import { createDocument } from '@/composables/document'
-import { getFormat, evaluateDependsOnValue } from '@/utils'
+import { getFormat, evaluateDependsOnValue, validateIsImageFile } from '@/utils'
 import { flt } from '@/utils/numberFormat.js'
 import { getMeta } from '@/stores/meta'
 import { usersStore } from '@/stores/users'
 import { useDocument } from '@/data/document'
-import { Combobox, Tooltip, DatePicker, DateTimePicker } from 'frappe-ui'
+import {
+  Combobox,
+  Tooltip,
+  DatePicker,
+  DateTimePicker,
+  FileUploader,
+} from 'frappe-ui'
 import { computed, provide, inject } from 'vue'
 
 const props = defineProps({

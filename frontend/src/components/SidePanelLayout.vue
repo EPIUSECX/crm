@@ -203,6 +203,40 @@
                             @change="(v) => fieldChange(v, field)"
                           />
                         </div>
+                        <FileUploader
+                          v-else-if="
+                            ['Attach', 'Attach Image'].includes(field.fieldtype)
+                          "
+                          :validateFile="
+                            field.fieldtype === 'Attach Image'
+                              ? validateIsImageFile
+                              : null
+                          "
+                          @success="(file) => fieldChange(file.file_url, field)"
+                        >
+                          <template #default="{ openFileSelector }">
+                            <div class="flex items-center gap-2">
+                              <Button
+                                class="form-control"
+                                :label="
+                                  doc[field.fieldname]
+                                    ? __('Change file')
+                                    : __('Upload file')
+                                "
+                                @click="openFileSelector"
+                              />
+                              <a
+                                v-if="doc[field.fieldname]"
+                                class="text-sm text-blue-600 hover:underline"
+                                :href="doc[field.fieldname]"
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                {{ __('View') }}
+                              </a>
+                            </div>
+                          </template>
+                        </FileUploader>
                         <FormattedInput
                           v-else-if="field.fieldtype === 'Percent'"
                           class="form-control"
@@ -320,9 +354,10 @@ import SidePanelModal from '@/components/Modals/SidePanelModal.vue'
 import { getMeta } from '@/stores/meta'
 import { usersStore } from '@/stores/users'
 import { isMobileView } from '@/composables/settings'
-import { getFormat, evaluateDependsOnValue } from '@/utils'
+import { createDocument } from '@/composables/document'
+import { getFormat, evaluateDependsOnValue, validateIsImageFile } from '@/utils'
 import { flt } from '@/utils/numberFormat.js'
-import { Tooltip, DateTimePicker, DatePicker } from 'frappe-ui'
+import { Tooltip, DateTimePicker, DatePicker, FileUploader } from 'frappe-ui'
 import { useDocument } from '@/data/document'
 import { ref, computed, getCurrentInstance } from 'vue'
 
@@ -402,6 +437,17 @@ function parsedField(field) {
       ...(field.link_filters ? JSON.parse(field.link_filters) : {}),
       name: ['in', users.data?.crmUsers?.map((user) => user.name)],
     })
+  }
+
+  if (field.fieldtype === 'Link' && field.options !== 'User') {
+    if (!field.create) {
+      field.create = (value, close) => {
+        const callback = (d) => {
+          if (d) fieldChange(d.name, field)
+        }
+        createDocument(field.options, value, close, callback)
+      }
+    }
   }
 
   let _field = {
