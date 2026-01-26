@@ -1,0 +1,20 @@
+{
+ "app": "crm",
+ "creation": "2026-01-26 16:19:19.107002",
+ "docstatus": 0,
+ "doctype": "Desktop Icon",
+ "hidden": 0,
+ "icon_type": "App",
+ "idx": 0,
+ "label": "Frappe CRM",
+ "link": "/crm",
+ "link_type": "External",
+ "logo_url": "/assets/crm/images/logo.svg",
+ "modified": "2026-01-26 16:19:19.107002",
+ "modified_by": "Administrator",
+ "name": "Frappe CRM",
+ "owner": "Administrator",
+ "restrict_removal": 0,
+ "roles": [],
+ "standard": 1
+}
