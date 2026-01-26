@@ -137,6 +137,9 @@ const tabs = createResource({
   transform: (_tabs) => {
     return _tabs.forEach((tab) => {
       tab.sections.forEach((section) => {
+        if (section.name === 'attachments_section') {
+          section.opened = false
+        }
         section.columns.forEach((column) => {
           column.fields.forEach((field) => {
             if (field.fieldname == 'address') {
