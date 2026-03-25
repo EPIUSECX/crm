@@ -256,7 +256,7 @@ class CRMDeal(Document):
 			system_currency = frappe.db.get_single_value("FCRM Settings", "currency") or "USD"
 			exchange_rate = 1
 			if self.currency and self.currency != system_currency:
-				exchange_rate = get_exchange_rate(self.currency, system_currency)
+				exchange_rate = get_exchange_rate(self.currency, system_currency, throw=False) or 1
 
 			self.db_set("exchange_rate", exchange_rate)
 

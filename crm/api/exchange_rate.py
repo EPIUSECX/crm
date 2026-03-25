@@ -6,7 +6,9 @@ from crm.fcrm.doctype.fcrm_settings.fcrm_settings import FCRMSettings
 
 
 @frappe.whitelist()
-def get_exchange_rate(from_currency: str, to_currency: str, date: str | None = None):
+def get_exchange_rate(
+	from_currency: str, to_currency: str, date: str | None = None, throw: bool = True
+):
 	if not date:
 		date = "latest"
 
@@ -23,6 +25,16 @@ def get_exchange_rate(from_currency: str, to_currency: str, date: str | None = N
 	if rate is not None:
 		frappe.cache().set_value(cache_key, rate)
 		return rate
+
+	if not throw:
+		frappe.log_error(
+			title="Exchange Rate Fetch Warning",
+			message=(
+				f"Falling back to default exchange rate for {from_currency} to {to_currency} on {date} "
+				f"after {api_used} provider lookup failed."
+			),
+		)
+		return None
 
 	_raise_exchange_rate_error(from_currency, to_currency, date, api_used)
 
@@ -54,9 +66,14 @@ def _fetch_exchange_rate(from_currency: str, to_currency: str, date: str):
 
 
 def _fetch_from_frankfurter(from_currency: str, to_currency: str, date: str):
-	res = requests.get(f"https://api.frankfurter.app/{date}?from={from_currency}&to={to_currency}", timeout=5)
-	if res.ok:
-		return res.json()["rates"][to_currency]
+	try:
+		res = requests.get(
+			f"https://api.frankfurter.app/{date}?from={from_currency}&to={to_currency}", timeout=5
+		)
+		if res.ok:
+			return res.json()["rates"][to_currency]
+	except requests.RequestException:
+		return None
 	return None
 
 
@@ -88,9 +105,12 @@ def _fetch_from_exchangerate_host(settings: FCRMSettings, from_currency: str, to
 	params = {"access_key": settings.access_key, "from": from_currency, "to": to_currency, "amount": 1}
 	if date != "latest":
 		params["date"] = date
-	res = requests.get("https://api.exchangerate.host/convert", params=params, timeout=5)
-	if res.ok:
-		return res.json()["result"]
+	try:
+		res = requests.get("https://api.exchangerate.host/convert", params=params, timeout=5)
+		if res.ok:
+			return res.json()["result"]
+	except requests.RequestException:
+		return None
 	return None
 
 
@@ -101,14 +121,17 @@ def _fetch_from_exchangerate_api(settings: FCRMSettings, from_currency: str, to_
 				frappe.bold(settings.service_provider)
 			)
 		)
-	res = requests.get(
-		f"https://v6.exchangerate-api.com/v6/{settings.access_key}/pair/{from_currency}/{to_currency}",
-		timeout=5,
-	)
-	if res.ok:
-		data = res.json()
-		if data["result"] == "success":
-			return data["conversion_rate"]
+	try:
+		res = requests.get(
+			f"https://v6.exchangerate-api.com/v6/{settings.access_key}/pair/{from_currency}/{to_currency}",
+			timeout=5,
+		)
+		if res.ok:
+			data = res.json()
+			if data["result"] == "success":
+				return data["conversion_rate"]
+	except requests.RequestException:
+		return None
 	return None
 
 
