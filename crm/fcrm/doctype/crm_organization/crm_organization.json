@@ -17,7 +17,15 @@
   "website",
   "territory",
   "industry",
-  "address"
+  "address",
+  "attachments_section",
+  "attachment_1",
+  "attachment_1_tags",
+  "attachment_2",
+  "attachment_2_tags",
+  "attachment_3",
+  "attachment_3_tags",
+  "other_attachments"
  ],
  "fields": [
   {
@@ -81,12 +89,53 @@
    "fieldname": "exchange_rate",
    "fieldtype": "Float",
    "label": "Exchange Rate"
+  },
+  {
+   "fieldname": "attachments_section",
+   "fieldtype": "Section Break",
+   "label": "Attachments"
+  },
+  {
+   "fieldname": "attachment_1",
+   "fieldtype": "Attach",
+   "label": "Attachment 1"
+  },
+  {
+   "fieldname": "attachment_1_tags",
+   "fieldtype": "Data",
+   "label": "Tags"
+  },
+  {
+   "fieldname": "attachment_2",
+   "fieldtype": "Attach",
+   "label": "Attachment 2"
+  },
+  {
+   "fieldname": "attachment_2_tags",
+   "fieldtype": "Data",
+   "label": "Tags"
+  },
+  {
+   "fieldname": "attachment_3",
+   "fieldtype": "Attach",
+   "label": "Attachment 3"
+  },
+  {
+   "fieldname": "attachment_3_tags",
+   "fieldtype": "Data",
+   "label": "Tags"
+  },
+  {
+   "fieldname": "other_attachments",
+   "fieldtype": "Table",
+   "label": "Other Attachments",
+   "options": "CRM Org Attachment Table"
   }
  ],
  "image_field": "organization_logo",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-23 12:27:26.887189",
+ "modified": "2026-03-25 13:10:50.823471",
  "modified_by": "Administrator",
  "module": "FCRM",
  "name": "CRM Organization",

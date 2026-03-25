@@ -158,11 +158,7 @@ const restrictedFieldTypes = [
   'Tab Break',
   'Section Break',
   'Column Break',
-  'Table',
-  'Table MultiSelect',
   'Geolocation',
-  'Attach',
-  'Attach Image',
   'HTML',
   'Signature',
 ]
@@ -175,10 +171,27 @@ const fields = computed(() => {
 
   return _fields
     .filter((field) => !restrictedFieldTypes.includes(field.fieldtype))
+    .sort((a, b) => {
+      const priority = (fieldtype) =>
+        ['Table', 'Table MultiSelect', 'Attach', 'Attach Image'].includes(
+          fieldtype,
+        )
+          ? 0
+          : 1
+
+      const priorityDiff = priority(a.fieldtype) - priority(b.fieldtype)
+      if (priorityDiff !== 0) return priorityDiff
+
+      return (a.label || a.fieldname || '').localeCompare(
+        b.label || b.fieldname || '',
+      )
+    })
     .map((field) => {
+      const baseLabel = field.label || field.fieldname
       return {
-        label: field.label,
+        label: `${baseLabel} (${field.fieldtype})`,
         value: field.fieldname,
+        rawLabel: baseLabel,
         fieldname: field.fieldname,
         fieldtype: field.fieldtype,
       }

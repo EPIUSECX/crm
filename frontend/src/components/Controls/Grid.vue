@@ -1,19 +1,23 @@
 <template>
-  <div class="flex flex-col flex-1 text-base">
+  <div
+    class="flex flex-1 flex-col text-base"
+    :class="{ 'grid-compact text-sm': compact }"
+  >
     <div v-if="label" class="mb-1.5 text-sm text-ink-gray-5">
       {{ __(label) }}
     </div>
 
     <div
       v-if="fields?.length"
-      class="rounded border border-outline-gray-modals"
+      class="overflow-x-auto rounded border border-outline-gray-modals"
     >
       <!-- Header -->
       <div
         class="grid-header flex items-center rounded-t-[7px] bg-surface-gray-2 text-ink-gray-5 truncate"
       >
         <div
-          class="inline-flex items-center justify-center border-r border-outline-gray-2 h-8 p-2 w-12"
+          class="inline-flex items-center justify-center border-r border-outline-gray-2 h-8 p-2"
+          :class="compact ? 'w-10 shrink-0' : 'w-12 shrink-0'"
         >
           <Checkbox
             class="cursor-pointer duration-300"
@@ -22,12 +26,14 @@
           />
         </div>
         <div
-          class="inline-flex items-center justify-center border-r border-outline-gray-2 py-2 px-1 w-12"
+          class="inline-flex items-center justify-center border-r border-outline-gray-2 py-2 px-1"
+          :class="compact ? 'w-10 shrink-0' : 'w-12 shrink-0'"
         >
           {{ __('No.') }}
         </div>
         <div
           class="grid w-full truncate"
+          :class="compact ? '' : 'min-w-max'"
           :style="{ gridTemplateColumns: gridTemplateColumns }"
         >
           <div
@@ -52,7 +58,10 @@
             >
           </div>
         </div>
-        <div class="flex items-center justify-center w-12">
+        <div
+          class="flex items-center justify-center shrink-0"
+          :class="compact ? 'w-10' : 'w-12'"
+        >
           <Button
             :tooltip="__('Edit Grid Fields')"
             class="rounded !bg-surface-gray-2 border-0 !text-ink-gray-5"
@@ -84,7 +93,8 @@
               "
             >
               <div
-                class="grid-row-checkbox inline-flex h-9.5 items-center bg-surface-white justify-center border-r border-outline-gray-modals p-2 w-12"
+              class="grid-row-checkbox inline-flex items-center bg-surface-white justify-center border-r border-outline-gray-modals p-2"
+              :class="compact ? 'h-8 w-10 shrink-0' : 'h-9.5 w-12 shrink-0'"
               >
                 <Checkbox
                   class="cursor-pointer duration-300"
@@ -93,12 +103,14 @@
                 />
               </div>
               <div
-                class="flex h-9.5 items-center justify-center bg-surface-white border-r border-outline-gray-modals py-2 px-1 text-sm text-ink-gray-8 w-12"
+                class="flex items-center justify-center bg-surface-white border-r border-outline-gray-modals py-2 px-1 text-sm text-ink-gray-8"
+                :class="compact ? 'h-8 w-10 shrink-0' : 'h-9.5 w-12 shrink-0'"
               >
                 {{ index + 1 }}
               </div>
               <div
-                class="grid w-full h-9.5"
+                class="grid w-full"
+                :class="[compact ? 'min-h-8' : 'h-9.5', compact ? '' : 'min-w-max']"
                 :style="{ gridTemplateColumns: gridTemplateColumns }"
               >
                 <div
@@ -202,6 +214,45 @@
                     input-class="border-none text-sm text-ink-gray-8"
                     @change="(v) => fieldChange(v, field, row)"
                   />
+                  <FileUploader
+                    v-else-if="['Attach', 'Attach Image'].includes(field.fieldtype)"
+                    :validateFile="
+                      field.fieldtype === 'Attach Image'
+                        ? validateIsImageFile
+                        : undefined
+                    "
+                    @success="(file) => fieldChange(file.file_url, field, row)"
+                  >
+                    <template #default="{ openFileSelector }">
+                      <div class="flex h-full items-center justify-center gap-1 bg-surface-white px-1">
+                        <Button
+                          class="shrink-0 border-0 !px-1.5"
+                          :class="
+                            row[field.fieldname]
+                              ? '!text-ink-green-3 hover:!text-ink-green-2'
+                              : '!text-ink-gray-6'
+                          "
+                          variant="ghost"
+                          :icon="
+                            field.fieldtype === 'Attach Image' ? 'image' : 'paperclip'
+                          "
+                          :tooltip="
+                            row[field.fieldname]
+                              ? __('Change Attached File')
+                              : __('Upload File')
+                          "
+                          @click.stop="openFileSelector"
+                        />
+                        <Button
+                          v-if="row[field.fieldname]"
+                          class="ml-auto shrink-0 border-0 !px-1.5 !text-ink-gray-6"
+                          variant="ghost"
+                          icon="external-link"
+                          @click.stop="openFile(row[field.fieldname])"
+                        />
+                      </div>
+                    </template>
+                  </FileUploader>
                   <FormControl
                     v-else-if="
                       ['Small Text', 'Text', 'Long Text', 'Code'].includes(
@@ -292,7 +343,10 @@
                   />
                 </div>
               </div>
-              <div class="edit-row flex items-center justify-center w-12">
+              <div
+                class="edit-row flex items-center justify-center shrink-0"
+                :class="compact ? 'w-10' : 'w-12'"
+              >
                 <Button
                   :tooltip="__('Edit Row')"
                   class="rounded border-0 !text-ink-gray-7"
@@ -365,6 +419,8 @@ import { createDocument } from '@/composables/document'
 import {
   FormControl,
   Checkbox,
+  FileUploader,
+  FeatherIcon,
   TimePicker,
   DateTimePicker,
   DatePicker,
@@ -374,6 +430,7 @@ import {
 } from 'frappe-ui'
 import Draggable from 'vuedraggable'
 import { ref, reactive, computed, inject, provide } from 'vue'
+import { validateIsImageFile } from '@/utils'
 
 const props = defineProps({
   label: { type: String, default: '' },
@@ -381,6 +438,7 @@ const props = defineProps({
   parentDoctype: { type: String, required: true },
   parentFieldname: { type: String, required: true },
   overrides: { type: Object, default: () => ({}) },
+  compact: { type: Boolean, default: false },
 })
 
 const triggerOnChange = inject('triggerOnChange', () => {})
@@ -464,7 +522,10 @@ function getFieldObj(field) {
 
 const gridTemplateColumns = computed(() => {
   if (!fields.value?.length) return '1fr'
-  // for the checkbox & sr no. columns
+  if (props.compact) {
+    return fields.value.map(() => `minmax(0, 1fr)`).join(' ')
+  }
+
   let gridViewSettings = getGridViewSettings(props.parentDoctype)
   if (gridViewSettings.length) {
     return gridViewSettings
@@ -587,6 +648,11 @@ const getOptions = (options) => {
     return []
   }
 }
+
+function openFile(url) {
+  if (!url) return
+  window.open(url, '_blank', 'noopener')
+}
 </script>
 
 <style scoped>
@@ -640,5 +706,18 @@ const getOptions = (options) => {
 
 :deep(.grid-row button:focus-within) {
   border: 1px solid var(--outline-gray-2);
+}
+
+:deep(.grid-compact .grid-header),
+:deep(.grid-compact .grid-row) {
+  font-size: 0.875rem;
+}
+
+:deep(.grid-compact .grid-row input:not([type='checkbox'])),
+:deep(.grid-compact .grid-row textarea),
+:deep(.grid-compact .grid-row select),
+:deep(.grid-compact .grid-row button),
+:deep(.grid-compact .grid-row .combobox > div > div) {
+  height: 32px;
 }
 </style>

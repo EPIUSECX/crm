@@ -14,16 +14,42 @@
             :hideLabel="!section.label"
             :opened="section.opened"
           >
-            <template v-if="!preview" #actions>
-              <slot name="actions" v-bind="{ section }">
-                <Button
-                  v-if="section.showEditButton"
-                  variant="ghost"
-                  class="w-7 mr-2"
-                  :icon="EditIcon"
-                  @click="showSidePanelModal = true"
-                />
-              </slot>
+            <template #header="{ opened, toggle }">
+              <div
+                v-if="!section.hideLabel"
+                class="section-header flex h-8 items-center justify-between"
+              >
+                <div
+                  class="flex max-w-fit cursor-pointer items-center gap-2 px-2 text-base font-semibold text-ink-gray-9"
+                  @click="toggle"
+                >
+                  <FeatherIcon
+                    name="chevron-right"
+                    class="h-4 transition-all duration-300 ease-in-out"
+                    :class="{ 'rotate-90': opened }"
+                  />
+                  <div
+                    v-if="section.icon"
+                    class="flex h-6 w-6 items-center justify-center rounded bg-surface-gray-3 text-ink-gray-7"
+                  >
+                    <Icon :icon="section.icon" class="h-3.5 w-3.5" />
+                  </div>
+                  <span>
+                    {{ __(section.label) || __('Untitled') }}
+                  </span>
+                </div>
+                <div class="flex items-center">
+                  <slot name="actions" v-bind="{ section }">
+                    <Button
+                      v-if="!preview && section.showEditButton"
+                      variant="ghost"
+                      class="mr-2 w-7"
+                      :icon="EditIcon"
+                      @click="showSidePanelModal = true"
+                    />
+                  </slot>
+                </div>
+              </div>
             </template>
             <slot v-bind="{ section }">
               <FadedScrollableDiv
@@ -36,28 +62,154 @@
                 >
                   <div
                     v-if="field.visible"
-                    class="field flex items-center gap-2 px-3 leading-5 first:mt-3"
+                    class="field px-3 leading-5 first:mt-3"
+                    :class="
+                      isWideField(field)
+                        ? 'flex flex-col gap-2 py-2'
+                        : 'flex items-center gap-2'
+                    "
                   >
-                    <Tooltip :text="__(field.label)" :hoverDelay="1">
-                      <div
-                        class="w-[35%] min-w-20 shrink-0 flex items-center gap-0.5"
-                      >
-                        <div class="truncate text-sm text-ink-gray-5">
-                          {{ __(field.label) }}
-                        </div>
+                    <template v-if="isWideField(field)">
+                      <div class="flex items-center gap-2">
                         <div
-                          v-if="
-                            field.reqd ||
-                            (field.mandatory_depends_on &&
-                              field.mandatory_via_depends_on)
-                          "
-                          class="text-ink-red-2"
+                          v-if="getFieldIcon(field)"
+                          class="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-surface-gray-3 text-ink-gray-7"
                         >
-                          *
+                          <Icon :icon="getFieldIcon(field)" class="h-3.5 w-3.5" />
+                        </div>
+                        <div class="flex min-w-0 items-center gap-1">
+                          <div class="truncate text-sm text-ink-gray-5">
+                            {{ __(field.label) }}
+                          </div>
+                          <div
+                            v-if="
+                              field.reqd ||
+                              (field.mandatory_depends_on &&
+                                field.mandatory_via_depends_on)
+                            "
+                            class="text-ink-red-2"
+                          >
+                            *
+                          </div>
                         </div>
                       </div>
-                    </Tooltip>
-                    <div class="flex items-center justify-between w-[65%]">
+                      <div class="wide-field-content w-full overflow-hidden">
+                        <Grid
+                          v-if="field.fieldtype === 'Table'"
+                          v-model="doc[field.fieldname]"
+                          v-model:parent="doc"
+                          compact
+                          :label="''"
+                          :doctype="field.options"
+                          :parentDoctype="doctype"
+                          :parentFieldname="field.fieldname"
+                        />
+                        <TableMultiselectInput
+                          v-else-if="field.fieldtype === 'Table MultiSelect'"
+                          v-model="doc[field.fieldname]"
+                          :doctype="field.options"
+                          @change="(value) => fieldChange(value, field)"
+                        />
+                        <FileUploader
+                          v-else-if="['Attach', 'Attach Image'].includes(field.fieldtype)"
+                          :validateFile="
+                            field.fieldtype === 'Attach Image'
+                              ? validateIsImageFile
+                              : undefined
+                          "
+                          @success="(file) => fieldChange(file.file_url, field)"
+                        >
+                          <template #default="{ progress, uploading, openFileSelector }">
+                            <div class="flex flex-col gap-3">
+                              <div
+                                v-if="
+                                  field.fieldtype === 'Attach Image' &&
+                                  doc[field.fieldname]
+                                "
+                                class="overflow-hidden rounded-lg border border-outline-gray-modals bg-surface-white"
+                              >
+                                <img
+                                  :src="doc[field.fieldname]"
+                                  :alt="field.label"
+                                  class="h-40 w-full object-cover"
+                                />
+                              </div>
+                              <div
+                                v-else-if="doc[field.fieldname]"
+                                class="flex items-center justify-between gap-3 rounded-lg border border-outline-gray-modals bg-surface-white px-3 py-2"
+                              >
+                                <button
+                                  class="truncate text-left text-sm text-ink-gray-8 hover:text-ink-gray-9"
+                                  @click="openFile(doc[field.fieldname])"
+                                >
+                                  {{ getFileName(doc[field.fieldname]) }}
+                                </button>
+                                <Button
+                                  variant="ghost"
+                                  icon="external-link"
+                                  @click="openFile(doc[field.fieldname])"
+                                />
+                              </div>
+                              <div class="flex flex-wrap gap-2">
+                                <Button
+                                  :label="
+                                    uploading
+                                      ? __('Uploading {0}%', [progress])
+                                      : doc[field.fieldname]
+                                        ? __('Change File')
+                                        : field.fieldtype === 'Attach Image'
+                                          ? __('Upload Image')
+                                          : __('Upload File')
+                                  "
+                                  :iconLeft="
+                                    field.fieldtype === 'Attach Image'
+                                      ? 'image'
+                                      : 'paperclip'
+                                  "
+                                  @click="openFileSelector"
+                                />
+                                <Button
+                                  v-if="doc[field.fieldname]"
+                                  :label="__('Open')"
+                                  variant="outline"
+                                  iconLeft="external-link"
+                                  @click="openFile(doc[field.fieldname])"
+                                />
+                                <Button
+                                  v-if="doc[field.fieldname]"
+                                  :label="__('Remove')"
+                                  variant="outline"
+                                  theme="red"
+                                  iconLeft="trash-2"
+                                  @click="fieldChange('', field)"
+                                />
+                              </div>
+                            </div>
+                          </template>
+                        </FileUploader>
+                      </div>
+                    </template>
+                    <template v-else>
+                      <Tooltip :text="__(field.label)" :hoverDelay="1">
+                        <div
+                          class="w-[35%] min-w-20 shrink-0 flex items-center gap-0.5"
+                        >
+                          <div class="truncate text-sm text-ink-gray-5">
+                            {{ __(field.label) }}
+                          </div>
+                          <div
+                            v-if="
+                              field.reqd ||
+                              (field.mandatory_depends_on &&
+                                field.mandatory_via_depends_on)
+                            "
+                            class="text-ink-red-2"
+                          >
+                            *
+                          </div>
+                        </div>
+                      </Tooltip>
+                      <div class="flex items-center justify-between w-[65%]">
                       <div
                         class="grid min-h-[28px] flex-1 items-center overflow-hidden text-base"
                       >
@@ -296,6 +448,7 @@
                         />
                       </div>
                     </div>
+                    </template>
                   </div>
                 </template>
               </FadedScrollableDiv>
@@ -322,16 +475,19 @@ import FadedScrollableDiv from '@/components/FadedScrollableDiv.vue'
 import ArrowUpRightIcon from '@/components/Icons/ArrowUpRightIcon.vue'
 import EditIcon from '@/components/Icons/EditIcon.vue'
 import Link from '@/components/Controls/Link.vue'
+import Grid from '@/components/Controls/Grid.vue'
+import TableMultiselectInput from '@/components/Controls/TableMultiselectInput.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import SidePanelModal from '@/components/Modals/SidePanelModal.vue'
+import Icon from '@/components/Icon.vue'
 import { getMeta } from '@/stores/meta'
 import { usersStore } from '@/stores/users'
 import { isMobileView } from '@/composables/settings'
-import { getFormat, evaluateDependsOnValue } from '@/utils'
+import { getFormat, evaluateDependsOnValue, validateIsImageFile } from '@/utils'
 import { flt } from '@/utils/numberFormat.js'
-import { Tooltip, DateTimePicker, DatePicker, TimePicker } from 'frappe-ui'
+import { Tooltip, DateTimePicker, DatePicker, TimePicker, FileUploader } from 'frappe-ui'
 import { useDocument } from '@/data/document'
-import { ref, computed, getCurrentInstance } from 'vue'
+import { ref, computed, getCurrentInstance, provide } from 'vue'
 
 const props = defineProps({
   sections: { type: Object, default: () => ({}) },
@@ -352,14 +508,48 @@ const showSidePanelModal = ref(false)
 
 let document = { doc: {} }
 let triggerOnChange
+let triggerOnRowAdd
+let triggerOnRowRemove
 
 if (props.docname) {
   let d = useDocument(props.doctype, props.docname)
   document = d.document
   triggerOnChange = d.triggerOnChange
+  triggerOnRowAdd = d.triggerOnRowAdd
+  triggerOnRowRemove = d.triggerOnRowRemove
 }
 
 const doc = computed(() => document.doc || {})
+
+provide('triggerOnChange', async (fieldname, value, row) => {
+  await triggerOnChange?.(fieldname, value, row)
+  if (!props.preview) {
+    document.save.submit(null, {
+      onSuccess: () => emit('afterFieldChange', { [fieldname]: value }),
+    })
+  }
+})
+
+provide('triggerOnRowAdd', async (row) => {
+  await triggerOnRowAdd?.(row)
+  if (!props.preview) {
+    document.save.submit(null, {
+      onSuccess: () =>
+        emit('afterFieldChange', { [row.parentfield]: doc.value[row.parentfield] }),
+    })
+  }
+})
+
+provide('triggerOnRowRemove', async (selectedRows, rows) => {
+  await triggerOnRowRemove?.(selectedRows, rows)
+  if (!props.preview) {
+    const parentfield = rows?.[0]?.parentfield
+    document.save.submit(null, {
+      onSuccess: () =>
+        emit('afterFieldChange', { [parentfield || 'rows']: rows }),
+    })
+  }
+})
 
 const _sections = computed(() => {
   if (!props.sections?.length) return []
@@ -449,11 +639,77 @@ function parsedSection(section, editButtonAdded) {
     editButtonAdded
   )
 
+  section.icon = getSectionIcon(section)
   section.visible =
     isContactSection ||
     section.columns?.[0].fields.filter((f) => f.visible).length
 
   return section
+}
+
+function getSectionIcon(section) {
+  const labels = section.columns?.[0]?.fields
+    ?.filter((field) => field.visible)
+    .map((field) => `${field.label || ''} ${field.fieldname || ''}`.toLowerCase())
+
+  if (!labels?.length) return 'grid'
+  if (section.columns?.[0]?.fields?.some((field) => field.fieldtype === 'Attach Image')) {
+    return null
+  }
+  if (section.columns?.[0]?.fields?.some((field) => field.fieldtype === 'Attach')) {
+    return null
+  }
+  if (labels.some((label) => label.includes('tag'))) {
+    return 'tag'
+  }
+  if (section.columns?.[0]?.fields?.some((field) => field.fieldtype === 'Table')) {
+    return 'grid'
+  }
+  if (
+    section.columns?.[0]?.fields?.some(
+      (field) => field.fieldtype === 'Table MultiSelect',
+    )
+  ) {
+    return 'tag'
+  }
+  return 'grid'
+}
+
+function getFieldIcon(field) {
+  if (field.fieldtype === 'Attach Image') return null
+  if (field.fieldtype === 'Attach') return null
+
+  if (field.fieldtype === 'Table') {
+    const label = `${field.label || ''} ${field.fieldname || ''}`.toLowerCase()
+    if (
+      label.includes('document') ||
+      label.includes('file') ||
+      label.includes('attach')
+    ) {
+      return null
+    }
+    return 'grid'
+  }
+
+  if (field.fieldtype === 'Table MultiSelect') return 'tag'
+
+  return 'grid'
+}
+
+function isWideField(field) {
+  return ['Table', 'Table MultiSelect', 'Attach', 'Attach Image'].includes(
+    field.fieldtype,
+  )
+}
+
+function getFileName(url) {
+  if (!url) return ''
+  return url.split('/').pop()?.split('?')[0] || url
+}
+
+function openFile(url) {
+  if (!url) return
+  window.open(url, '_blank', 'noopener')
 }
 
 function isFieldVisible(field) {
@@ -516,5 +772,14 @@ function firstVisibleIndex() {
 }
 .sections .section:last-of-type .column {
   max-height: none;
+}
+
+.wide-field-content {
+  min-width: 0;
+}
+
+:deep(.wide-field-content .combobox button),
+:deep(.wide-field-content .form-control button) {
+  color: inherit;
 }
 </style>

@@ -32,6 +32,60 @@
       :parentDoctype="doctype"
       :parentFieldname="field.fieldname"
     />
+    <FileUploader
+      v-else-if="['Attach', 'Attach Image'].includes(field.fieldtype)"
+      :validateFile="
+        field.fieldtype === 'Attach Image' ? validateIsImageFile : undefined
+      "
+      @success="(file) => fieldChange(file.file_url, field)"
+    >
+      <template #default="{ progress, uploading, openFileSelector }">
+        <div class="flex flex-col gap-2">
+          <div
+            v-if="field.fieldtype === 'Attach Image' && data[field.fieldname]"
+            class="overflow-hidden rounded-lg border border-outline-gray-modals bg-surface-white"
+          >
+            <img
+              :src="data[field.fieldname]"
+              :alt="field.label"
+              class="h-40 w-full object-cover"
+            />
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <Button
+              :label="
+                uploading
+                  ? __('Uploading {0}%', [progress])
+                  : data[field.fieldname]
+                    ? __('Change File')
+                    : field.fieldtype === 'Attach Image'
+                      ? __('Upload Image')
+                      : __('Upload File')
+              "
+              :iconLeft="
+                field.fieldtype === 'Attach Image' ? 'image' : 'paperclip'
+              "
+              @click="openFileSelector"
+            />
+            <Button
+              v-if="data[field.fieldname]"
+              :label="__('Open')"
+              variant="outline"
+              iconLeft="external-link"
+              @click="openFile(data[field.fieldname])"
+            />
+            <Button
+              v-if="data[field.fieldname]"
+              :label="__('Remove')"
+              variant="outline"
+              theme="red"
+              iconLeft="trash-2"
+              @click="fieldChange('', field)"
+            />
+          </div>
+        </div>
+      </template>
+    </FileUploader>
     <FormControl
       v-else-if="field.fieldtype === 'Select'"
       v-model="data[field.fieldname]"
@@ -247,8 +301,10 @@ import {
   DatePicker,
   DateTimePicker,
   TimePicker,
+  FileUploader,
 } from 'frappe-ui'
 import { computed, provide, inject } from 'vue'
+import { validateIsImageFile } from '@/utils'
 
 const props = defineProps({
   field: { type: Object, required: true },
@@ -400,6 +456,11 @@ function getDataValue(value, field) {
     return value || 0
   }
   return value
+}
+
+function openFile(url) {
+  if (!url) return
+  window.open(url, '_blank', 'noopener')
 }
 </script>
 <style scoped>
