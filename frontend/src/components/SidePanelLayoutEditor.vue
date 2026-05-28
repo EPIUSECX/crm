@@ -155,18 +155,20 @@ const props = defineProps({
 const sections = defineModel({ type: Array, default: () => [] })
 
 const restrictedFieldTypes = [
-  'Tab Break',
   'Section Break',
   'Column Break',
+  'Tab Break',
   'Geolocation',
   'HTML',
   'Signature',
+  'Image',
 ]
 
 const { getFields } = getMeta(props.doctype)
 
 const fields = computed(() => {
-  let _fields = getFields() || []
+  let _fields =
+    getFields({ restrictNoValueFields: false, restrictedFieldTypes }) || []
   if (!_fields.length) return []
 
   return _fields

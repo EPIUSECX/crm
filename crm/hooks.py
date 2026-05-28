@@ -128,13 +128,15 @@ before_uninstall = "crm.uninstall.before_uninstall"
 # -----------
 # Permissions evaluated in scripted ways
 
-# permission_query_conditions = {
-# "Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
-# has_permission = {
-# "Event": "frappe.desk.doctype.event.event.has_permission",
-# }
+permission_query_conditions = {
+	"CRM Lead": "crm.permissions.org_hierarchy.get_lead_permission_query_conditions",
+	"CRM Deal": "crm.permissions.org_hierarchy.get_deal_permission_query_conditions",
+}
+
+has_permission = {
+	"CRM Lead": "crm.permissions.org_hierarchy.has_lead_permission",
+	"CRM Deal": "crm.permissions.org_hierarchy.has_deal_permission",
+}
 
 # DocType Class
 # ---------------
@@ -158,14 +160,11 @@ doc_events = {
 		"on_update": ["crm.api.todo.on_update"],
 	},
 	"Communication": {
-		"after_insert": [
-			"crm.utils.update_modified_timestamp",
-			"crm.utils.update_communication_status",
-			"crm.utils.create_lead_from_incoming_email",
-		],
+		"after_insert": ["crm.utils.on_communication_insert"],
+		"on_update": ["crm.utils.on_communication_update"],
 	},
 	"Comment": {
-		"after_insert": ["crm.utils.update_modified_timestamp"],
+		"after_insert": ["crm.utils.on_comment_insert"],
 		"on_update": ["crm.api.comment.on_update"],
 	},
 	"WhatsApp Message": {

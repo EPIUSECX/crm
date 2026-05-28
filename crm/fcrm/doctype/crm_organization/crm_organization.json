@@ -31,6 +31,7 @@
   {
    "fieldname": "organization_name",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
    "label": "Organization Name",
    "unique": 1
   },
@@ -47,6 +48,7 @@
   {
    "fieldname": "no_of_employees",
    "fieldtype": "Select",
+   "in_standard_filter": 1,
    "label": "No. of Employees",
    "options": "1-10\n11-50\n51-200\n201-500\n501-1000\n1000+"
   },
@@ -63,12 +65,14 @@
   {
    "fieldname": "industry",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Industry",
    "options": "CRM Industry"
   },
   {
    "fieldname": "territory",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Territory",
    "options": "CRM Territory"
   },

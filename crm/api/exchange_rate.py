@@ -40,29 +40,38 @@ def get_exchange_rate(
 
 
 def _fetch_exchange_rate(from_currency: str, to_currency: str, date: str):
-	"""Try each configured provider in order and return (rate, provider_name)."""
 	settings = frappe.get_single("FCRM Settings")
 	provider = settings.service_provider
 
-	_provider = "frankfurter"
-	rate = _fetch_from_frankfurter(from_currency, to_currency, date)
-
-	if provider == "frankfurter.app" and rate is not None:
-		return rate, provider
-
-	_provider = "fawazahmed-exchange-api"
-	rate = _fetch_from_fawaz_api(from_currency, to_currency, date)
-
-	if provider == "fawazahmed-exchange-api" and rate is not None:
-		return rate, provider
-
+	# Paid providers — no fallback, fail explicitly
 	if provider == "exchangerate.host":
 		return _fetch_from_exchangerate_host(settings, from_currency, to_currency, date), provider
 
 	if provider == "exchangerate-api":
 		return _fetch_from_exchangerate_api(settings, from_currency, to_currency), provider
 
-	return rate, _provider
+	# Free providers — try both as fallbacks, regardless of which is "primary"
+	if provider == "frankfurter.app":
+		rate = _fetch_from_frankfurter(from_currency, to_currency, date)
+		if rate is not None:
+			return rate, provider
+		# Frankfurter is down — silently fall back to fawaz
+		rate = _fetch_from_fawaz_api(from_currency, to_currency, date)
+		return rate, "fawazahmed-exchange-api"
+
+	if provider == "fawazahmed-exchange-api":
+		rate = _fetch_from_fawaz_api(from_currency, to_currency, date)
+		if rate is not None:
+			return rate, provider
+		# fawaz is down — silently fall back to frankfurter
+		rate = _fetch_from_frankfurter(from_currency, to_currency, date)
+		return rate, "frankfurter"
+
+	# Unknown provider — try both free ones
+	rate = _fetch_from_frankfurter(from_currency, to_currency, date)
+	if rate is not None:
+		return rate, "frankfurter"
+	return _fetch_from_fawaz_api(from_currency, to_currency, date), "fawazahmed-exchange-api"
 
 
 def _fetch_from_frankfurter(from_currency: str, to_currency: str, date: str):
@@ -71,9 +80,9 @@ def _fetch_from_frankfurter(from_currency: str, to_currency: str, date: str):
 			f"https://api.frankfurter.app/{date}?from={from_currency}&to={to_currency}", timeout=5
 		)
 		if res.ok:
-			return res.json()["rates"][to_currency]
-	except requests.RequestException:
-		return None
+			return res.json().get("rates", {}).get(to_currency)
+	except Exception:
+		pass
 	return None
 
 

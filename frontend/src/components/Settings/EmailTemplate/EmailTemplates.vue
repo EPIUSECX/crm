@@ -102,7 +102,9 @@
               <Switch
                 v-model="template.enabled"
                 size="sm"
-                @update:model-value="toggleEmailTemplate(template)"
+                @update:model-value="
+                  (val) => toggleEmailTemplate(template, val)
+                "
                 @click.stop
               />
               <Dropdown
@@ -146,6 +148,7 @@
 <script setup>
 import EmailTemplateIcon from '@/components/Icons/EmailTemplateIcon.vue'
 import EmptyState from '../../ListViews/EmptyState.vue'
+import { useBroadcast } from '@/composables/useBroadcast'
 import {
   TextInput,
   FormControl,
@@ -158,6 +161,8 @@ import { ref, computed, inject } from 'vue'
 import { ConfirmDelete } from '../../../utils'
 
 const emit = defineEmits(['updateStep'])
+
+const { send } = useBroadcast()
 
 const templates = inject('templates')
 
@@ -182,24 +187,25 @@ const templatesList = computed(() => {
   return list
 })
 
-function toggleEmailTemplate(template) {
+function toggleEmailTemplate(template, enabledVal) {
   templates.setValue.submit(
     {
       name: template.name,
-      enabled: template.enabled ? 1 : 0,
+      enabled: enabledVal ? 1 : 0,
     },
     {
       onSuccess: () => {
         toast.success(
-          template.enabled
+          enabledVal
             ? __('Template enabled successfully')
             : __('Template disabled successfully'),
         )
+        send('refresh-email-templates')
       },
       onError: (error) => {
         toast.error(error.messages[0] || __('Failed to update template'))
         // Revert the change if there was an error
-        template.enabled = !template.enabled
+        template.enabled = !enabledVal
       },
     },
   )
